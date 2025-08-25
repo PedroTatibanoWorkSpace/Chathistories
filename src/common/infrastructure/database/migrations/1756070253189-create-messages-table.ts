@@ -1,237 +1,100 @@
-import { MigrationInterface, QueryRunner, Table } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateMessagesTable1756070253189 implements MigrationInterface {
+export class CreatePartitionedMessages1756070253189
+  implements MigrationInterface
+{
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
+      CREATE TABLE messages (
+        id UUID DEFAULT gen_random_uuid(),
+        
+        chat_id UUID NOT NULL,
+        phone_id UUID NOT NULL,
+        account_id UUID NOT NULL,
+        author_id UUID NULL,
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.createTable(
-            new Table({
-                name: "messages",
-                columns: [
-                    {
-                        name: "id",
-                        type: "uuid",
-                        isPrimary: true,
-                        generationStrategy: "uuid",
-                        default: "gen_random_uuid()"
-                    },
-                    {
-                        name: "external_id",
-                        type: "varchar",
-                        length: "255",
-                        isUnique: true,
-                        isNullable: false
-                    },
-                    {
-                        name: "chat_external_id",
-                        type: "varchar",
-                        length: "255",
-                        isNullable: false
-                    },
-                    {
-                        name: "phone_external_id",
-                        type: "varchar",
-                        length: "255",
-                        isNullable: false
-                    },
-                    {
-                        name: "account_external_id",
-                        type: "varchar",
-                        length: "255",
-                        isNullable: false
-                    },
-                    {
-                        name: "author_external_id",
-                        type: "varchar",
-                        length: "255",
-                        isNullable: true
-                    },
-                    {
-                        name: "wa_message_id",
-                        type: "varchar",
-                        length: "500",
-                        isNullable: false
-                    },
-                    {
-                        name: "wa_sender_id",
-                        type: "varchar",
-                        length: "255",
-                        isNullable: false
-                    },
-                    {
-                        name: "status",
-                        type: "varchar",
-                        length: "50",
-                        isNullable: false
-                    },
-                    {
-                        name: "is_approved",
-                        type: "boolean",
-                        default: false,
-                        isNullable: false
-                    },
-                    {
-                        name: "type",
-                        type: "varchar",
-                        length: "50",
-                        isNullable: false
-                    },
-                    {
-                        name: "is_out",
-                        type: "boolean",
-                        isNullable: false
-                    },
-                    {
-                        name: "ack",
-                        type: "integer",
-                        isNullable: false
-                    },
-                    {
-                        name: "text",
-                        type: "text",
-                        isNullable: true
-                    },
-                    {
-                        name: "quotes",
-                        type: "text",
-                        isNullable: true
-                    },
-                    {
-                        name: "quotes_type",
-                        type: "varchar",
-                        length: "50",
-                        isNullable: true
-                    },
-                    {
-                        name: "quotes_wa_message_id",
-                        type: "varchar",
-                        length: "500",
-                        isNullable: true
-                    },
-                    {
-                        name: "options_open",
-                        type: "boolean",
-                        default: false,
-                        isNullable: false
-                    },
-                    {
-                        name: "is_template",
-                        type: "boolean",
-                        default: false,
-                        isNullable: false
-                    },
-                    {
-                        name: "deleted",
-                        type: "boolean",
-                        default: false,
-                        isNullable: false
-                    },
-                    {
-                        name: "hide",
-                        type: "boolean",
-                        default: false,
-                        isNullable: false
-                    },
-                    {
-                        name: "processor",
-                        type: "integer",
-                        default: 0,
-                        isNullable: false
-                    },
-                    {
-                        name: "is_forwarded",
-                        type: "boolean",
-                        default: false,
-                        isNullable: false
-                    },
-                    {
-                        name: "from_device",
-                        type: "boolean",
-                        default: false,
-                        isNullable: false
-                    },
-                    {
-                        name: "created_at",
-                        type: "timestamp",
-                        isNullable: false
-                    },
-                    {
-                        name: "timestamp",
-                        type: "timestamp",
-                        isNullable: false
-                    },
-                    {
-                        name: "send_date",
-                        type: "timestamp",
-                        isNullable: false
-                    }
-                ],
-                indices: [
-                    {
-                        name: "IDX_messages_external_id",
-                        columnNames: ["external_id"]
-                    },
-                    {
-                        name: "IDX_messages_phone_external_id_timestamp",
-                        columnNames: ["phone_external_id", "timestamp"]
-                    },
-                    {
-                        name: "IDX_messages_chat_external_id_timestamp",
-                        columnNames: ["chat_external_id", "timestamp"]
-                    },
-                    {
-                        name: "IDX_messages_account_external_id_timestamp",
-                        columnNames: ["account_external_id", "timestamp"]
-                    },
-                    {
-                        name: "IDX_messages_timestamp",
-                        columnNames: ["timestamp"]
-                    },
-                    {
-                        name: "IDX_messages_wa_message_id",
-                        columnNames: ["wa_message_id"]
-                    },
-                    {
-                        name: "IDX_messages_created_at",
-                        columnNames: ["created_at"]
-                    }
-                ],
-                foreignKeys: [
-                    {
-                        name: "FK_messages_chat_external_id",
-                        columnNames: ["chat_external_id"],
-                        referencedTableName: "chats",
-                        referencedColumnNames: ["external_id"],
-                        onDelete: "CASCADE"
-                    },
-                    {
-                        name: "FK_messages_phone_external_id",
-                        columnNames: ["phone_external_id"],
-                        referencedTableName: "phones",
-                        referencedColumnNames: ["external_id"],
-                        onDelete: "CASCADE"
-                    },
-                    {
-                        name: "FK_messages_account_external_id",
-                        columnNames: ["account_external_id"],
-                        referencedTableName: "accounts",
-                        referencedColumnNames: ["external_id"],
-                        onDelete: "CASCADE"
-                    },
-                    {
-                        name: "FK_messages_author_external_id",
-                        columnNames: ["author_external_id"],
-                        referencedTableName: "users",
-                        referencedColumnNames: ["external_id"],
-                        onDelete: "SET NULL"
-                    }
-                ]
-            }),
-            true
-        );
-    }
+        external_id VARCHAR(255) NOT NULL,
+        chat_external_id VARCHAR(255) NOT NULL,
+        phone_external_id VARCHAR(255) NOT NULL,
+        account_external_id VARCHAR(255) NOT NULL,
+        author_external_id VARCHAR(255),
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.dropTable("messages");
-    }
+        wa_message_id VARCHAR(500) NOT NULL,
+        wa_sender_id VARCHAR(255) NOT NULL,
 
+        status SMALLINT NOT NULL,
+        is_approved BOOLEAN DEFAULT FALSE,
+        type SMALLINT NOT NULL,
+        is_out BOOLEAN NOT NULL,
+        ack SMALLINT NOT NULL,
+        is_template BOOLEAN DEFAULT FALSE,
+        options_open BOOLEAN DEFAULT FALSE,
+        deleted BOOLEAN DEFAULT FALSE,
+        hide BOOLEAN DEFAULT FALSE,
+        processor INTEGER DEFAULT 0,
+        is_forwarded BOOLEAN DEFAULT FALSE,
+        from_device BOOLEAN DEFAULT FALSE,
+
+        text TEXT,
+        quotes TEXT,
+        quotes_type SMALLINT,
+        quotes_wa_message_id VARCHAR(500),
+
+        created_at TIMESTAMPTZ DEFAULT now(),
+        timestamp TIMESTAMPTZ NOT NULL,
+        send_date TIMESTAMPTZ,
+
+        PRIMARY KEY (id, timestamp)
+      ) PARTITION BY RANGE (timestamp);
+    `);
+
+    await queryRunner.query(`
+      CREATE INDEX idx_messages_external_id ON messages (external_id);
+    `);
+
+    await queryRunner.query(`
+      CREATE TABLE messages_2025_08 PARTITION OF messages
+      FOR VALUES FROM ('2025-08-01') TO ('2025-09-01');
+    `);
+
+    await queryRunner.query(`
+      CREATE INDEX idx_messages_2025_08_chat_id_timestamp
+      ON messages_2025_08 (chat_id, timestamp);
+    `);
+
+    await queryRunner.query(`
+      CREATE INDEX idx_messages_2025_08_account_id_timestamp
+      ON messages_2025_08 (account_id, timestamp);
+    `);
+
+    await queryRunner.query(`
+      CREATE INDEX idx_messages_2025_08_phone_id_timestamp
+      ON messages_2025_08 (phone_id, timestamp);
+    `);
+
+    await queryRunner.query(`
+      CREATE INDEX idx_messages_2025_08_timestamp
+      ON messages_2025_08 (timestamp);
+    `);
+
+    await queryRunner.query(`
+      CREATE INDEX idx_messages_2025_08_created_at
+      ON messages_2025_08 (created_at);
+    `);
+
+    await queryRunner.query(`
+      CREATE INDEX idx_messages_2025_08_wa_message_id_hash
+      ON messages_2025_08 USING HASH (md5(wa_message_id));
+    `);
+
+    await queryRunner.query(`
+      CREATE UNIQUE INDEX idx_messages_2025_08_external_id_timestamp
+      ON messages_2025_08 (external_id, timestamp);
+    `);
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP TABLE IF EXISTS messages_2025_08;`);
+    await queryRunner.query(`DROP TABLE IF EXISTS messages;`);
+  }
 }
