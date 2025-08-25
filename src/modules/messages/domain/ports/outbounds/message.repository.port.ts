@@ -20,4 +20,5 @@ export interface MessageRepositoryPort
   extends BaseRepositoryPort<Message, MessageQuery> {
   findMessageByExternalId(externalId: string): Promise<Message | null>;
   findMessageByWaMessageId(waMessageId: string): Promise<Message | null>;
+  createMany(messages: Message[]): Promise<Message[]>;
 }

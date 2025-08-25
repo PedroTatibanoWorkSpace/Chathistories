@@ -30,6 +30,18 @@ export class TypeOrmMessageRepository implements MessageRepositoryPort {
     return MessageMapper.toDomainEntity(savedOrmMessage);
   }
 
+  async createMany(messages: Message[]): Promise<Message[]> {
+    if (messages.length === 0) return [];
+
+    const ormMessages = messages.map(MessageMapper.toOrmEntity);
+    const insertResult = await this.messageRepository.insert(ormMessages);
+
+    return messages.map((message, index) => ({
+      ...message,
+      id: insertResult.identifiers[index]?.id || message.id
+    }));
+  }
+
   async paginate(
     query: MessageQuery,
     params: PaginationParams,
