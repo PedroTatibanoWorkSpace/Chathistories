@@ -7,7 +7,7 @@ export class CreatePartitionedMessages1756070253189
     await queryRunner.query(`
       CREATE TABLE messages (
         id UUID DEFAULT gen_random_uuid(),
-        
+
         chat_id UUID NOT NULL,
         phone_id UUID NOT NULL,
         account_id UUID NOT NULL,
@@ -21,6 +21,7 @@ export class CreatePartitionedMessages1756070253189
 
         wa_message_id VARCHAR(500) NOT NULL,
         wa_sender_id VARCHAR(255) NOT NULL,
+        sender_name VARCHAR(255),
 
         status SMALLINT NOT NULL,
         is_approved BOOLEAN DEFAULT FALSE,
@@ -39,6 +40,16 @@ export class CreatePartitionedMessages1756070253189
         quotes TEXT,
         quotes_type SMALLINT,
         quotes_wa_message_id VARCHAR(500),
+        quotes_thumb TEXT,
+
+        file JSONB,
+        products JSONB,
+        vcard_contacts JSONB,
+        metadata JSONB,
+        bot_response JSONB,
+        watson_response JSONB,
+        error_details JSONB,
+        edits JSONB,
 
         created_at TIMESTAMPTZ DEFAULT now(),
         timestamp TIMESTAMPTZ NOT NULL,
@@ -83,8 +94,8 @@ export class CreatePartitionedMessages1756070253189
     `);
 
     await queryRunner.query(`
-      CREATE INDEX idx_messages_2025_08_wa_message_id_hash
-      ON messages_2025_08 USING HASH (md5(wa_message_id));
+      CREATE UNIQUE INDEX idx_messages_2025_08_wa_message_id
+      ON messages_2025_08 (wa_message_id);
     `);
 
     await queryRunner.query(`
