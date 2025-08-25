@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { PhonesModule } from './modules/phones/phones.module';
 import { ChatsModule } from './modules/chats/chats.module';
 import { MessagesModule } from './modules/messages/messages.module';
+import { ChatDelegation } from './modules/chat-delegation/domain/entity/chat-delegation.entity';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { MessagesModule } from './modules/messages/messages.module';
     PhonesModule,
     ChatsModule,
     MessagesModule,
+    ChatDelegation
   ],
   controllers: [AppController],
   providers: [AppService],
