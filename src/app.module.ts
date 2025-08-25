@@ -6,6 +6,7 @@ import { AccountModule } from './modules/accounts/account.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PhonesModule } from './modules/phones/phones.module';
+import { ChatsModule } from './modules/chats/chats.module';
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { PhonesModule } from './modules/phones/phones.module';
     DatabaseModule,
     ScheduleAppModule,
     AccountModule,
-    PhonesModule
+    PhonesModule,
+    ChatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
