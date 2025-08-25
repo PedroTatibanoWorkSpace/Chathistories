@@ -27,7 +27,6 @@ export class CreateMessageEditsTable1756073530979
             columnNames: ['message_id', 'message_timestamp', 'edit_date'],
           },
         ],
-        // Removido foreign key - não funciona com tabela particionada
       }),
     );
   }
