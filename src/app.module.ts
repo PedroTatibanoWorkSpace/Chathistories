@@ -10,6 +10,7 @@ import { ChatsModule } from './modules/chats/chats.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { ChatDelegation } from './modules/chat-delegation/domain/entity/chat-delegation.entity';
 import { ChatFunnelStepsModule } from './modules/chat-funnel-steps/chat-funnel-steps.module';
+import { ChatTagsModule } from './modules/chat-tags/chat-tags.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ChatFunnelStepsModule } from './modules/chat-funnel-steps/chat-funnel-s
     MessagesModule,
     ChatDelegation,
     ChatFunnelStepsModule,
+    ChatTagsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
