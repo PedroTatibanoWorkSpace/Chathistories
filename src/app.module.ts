@@ -9,6 +9,7 @@ import { PhonesModule } from './modules/phones/phones.module';
 import { ChatsModule } from './modules/chats/chats.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { ChatDelegation } from './modules/chat-delegation/domain/entity/chat-delegation.entity';
+import { ChatFunnelStepsModule } from './modules/chat-funnel-steps/chat-funnel-steps.module';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { ChatDelegation } from './modules/chat-delegation/domain/entity/chat-del
     PhonesModule,
     ChatsModule,
     MessagesModule,
-    ChatDelegation
+    ChatDelegation,
+    ChatFunnelStepsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
