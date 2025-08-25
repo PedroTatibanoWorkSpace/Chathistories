@@ -12,6 +12,7 @@ import { ChatDelegation } from './modules/chat-delegation/domain/entity/chat-del
 import { ChatFunnelStepsModule } from './modules/chat-funnel-steps/chat-funnel-steps.module';
 import { ChatTagsModule } from './modules/chat-tags/chat-tags.module';
 import { MessageProductsModule } from './modules/message-products/message-products.module';
+import { MessageEditsModule } from './modules/message-edits/message-edits.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { MessageProductsModule } from './modules/message-products/message-produc
     ChatFunnelStepsModule,
     ChatTagsModule,
     MessageProductsModule,
+    MessageEditsModule
   ],
   controllers: [AppController],
   providers: [AppService],
