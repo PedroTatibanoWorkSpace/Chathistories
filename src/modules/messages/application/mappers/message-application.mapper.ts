@@ -1,0 +1,50 @@
+import { Message } from '../../domain/entity/message.entity';
+import { MessageOutput } from '../dtos/message.output';
+
+export class MessageMapper {
+  static toOutputDto(message: Message): MessageOutput {
+    return {
+      id: message.id,
+      chatId: message.chatId,
+      phoneId: message.phoneId,
+      accountId: message.accountId,
+      authorId: message.authorId,
+      externalId: message.externalId,
+      chatExternalId: message.chatExternalId,
+      phoneExternalId: message.phoneExternalId,
+      accountExternalId: message.accountExternalId,
+      authorExternalId: message.authorExternalId,
+      waMessageId: message.waMessageId,
+      waSenderId: message.waSenderId,
+      senderName: message.senderName,
+      status: message.status,
+      isApproved: message.isApproved,
+      type: message.type,
+      isOut: message.isOut,
+      ack: message.ack,
+      isTemplate: message.isTemplate,
+      optionsOpen: message.optionsOpen,
+      deleted: message.deleted,
+      hide: message.hide,
+      processor: message.processor,
+      isForwarded: message.isForwarded,
+      fromDevice: message.fromDevice,
+      text: message.text,
+      quotes: message.quotes,
+      quotesType: message.quotesType,
+      quotesWaMessageId: message.quotesWaMessageId,
+      quotesThumb: message.quotesThumb,
+      file: message.file,
+      products: message.products,
+      vcardContacts: message.vcardContacts,
+      metadata: message.metadata,
+      botResponse: message.botResponse,
+      watsonResponse: message.watsonResponse,
+      errorDetails: message.errorDetails,
+      edits: message.edits,
+      createdAt: message.createdAt,
+      timestamp: message.timestamp,
+      sendDate: message.sendDate,
+    };
+  }
+}

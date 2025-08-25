@@ -7,6 +7,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PhonesModule } from './modules/phones/phones.module';
 import { ChatsModule } from './modules/chats/chats.module';
+import { MessagesModule } from './modules/messages/messages.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ChatsModule } from './modules/chats/chats.module';
     AccountModule,
     PhonesModule,
     ChatsModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
