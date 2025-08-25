@@ -8,11 +8,11 @@ import { AppService } from './app.service';
 import { PhonesModule } from './modules/phones/phones.module';
 import { ChatsModule } from './modules/chats/chats.module';
 import { MessagesModule } from './modules/messages/messages.module';
-import { ChatDelegation } from './modules/chat-delegation/domain/entity/chat-delegation.entity';
 import { ChatFunnelStepsModule } from './modules/chat-funnel-steps/chat-funnel-steps.module';
 import { ChatTagsModule } from './modules/chat-tags/chat-tags.module';
 import { MessageProductsModule } from './modules/message-products/message-products.module';
 import { MessageEditsModule } from './modules/message-edits/message-edits.module';
+import { ChatDelegationModule } from './modules/chat-delegation/chat-delegation.module';
 
 @Module({
   imports: [
@@ -26,7 +26,7 @@ import { MessageEditsModule } from './modules/message-edits/message-edits.module
     PhonesModule,
     ChatsModule,
     MessagesModule,
-    ChatDelegation,
+    ChatDelegationModule,
     ChatFunnelStepsModule,
     ChatTagsModule,
     MessageProductsModule,
