@@ -1,5 +1,7 @@
 export type CreateProps = {
   externalId: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export type ReconstructProps = {
@@ -25,11 +27,12 @@ export class Account {
   ) {}
 
   static create(props: CreateProps): Account {
+    const now = new Date();
     return new Account(
       crypto.randomUUID(),
       props.externalId,
-      new Date(),
-      new Date(),
+      props.createdAt || now,
+      props.updatedAt || now,
     );
   }
 
