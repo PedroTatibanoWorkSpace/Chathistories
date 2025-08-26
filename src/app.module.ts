@@ -13,7 +13,7 @@ import { MessageProductsModule } from './modules/message-products/message-produc
 import { MessageEditsModule } from './modules/message-edits/message-edits.module';
 import { ChatDelegationModule } from './modules/chat-delegation/chat-delegation.module';
 import { UsersModule } from './modules/users/users.module';
-import { AuthModule } from './modules/auth/req.module';
+import { ChatCatalogerModule } from './modules/chat-cataloger/chat-cataloger.module';
 
 @Module({
   imports: [
@@ -22,7 +22,6 @@ import { AuthModule } from './modules/auth/req.module';
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
     }),
     DatabaseModule,
-    AuthModule,
     AccountModule,
     PhonesModule,
     ChatsModule,
@@ -32,7 +31,8 @@ import { AuthModule } from './modules/auth/req.module';
     ChatTagsModule,
     MessageProductsModule,
     MessageEditsModule,
-    UsersModule
+    UsersModule,
+    ChatCatalogerModule
   ],
   controllers: [AppController],
   providers: [AppService],

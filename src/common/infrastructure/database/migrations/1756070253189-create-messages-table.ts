@@ -60,7 +60,7 @@ export class CreateMessagesHypertable1756070253189
     `);
 
     await queryRunner.query(`
-      SELECT create_hypertable('messages', 'timestamp', chunk_time_interval => interval '1 day');
+      SELECT create_hypertable('messages', 'timestamp', chunk_time_interval => interval '7 days');
     `);
 
     await queryRunner.query(
@@ -68,10 +68,6 @@ export class CreateMessagesHypertable1756070253189
     );
     await queryRunner.query(
       `CREATE INDEX idx_messages_phone_id ON messages (phone_id);`,
-    );
-
-    await queryRunner.query(
-      `CREATE UNIQUE INDEX idx_messages_wa_message_id ON messages (wa_message_id, timestamp);`,
     );
 
     await queryRunner.query(
