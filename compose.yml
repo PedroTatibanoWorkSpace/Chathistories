@@ -3,7 +3,7 @@ version: '3.9'
 services:
   postgres:
     platform: linux/amd64
-    image: postgres:17-alpine
+    image: timescale/timescaledb:latest-pg17
     ports:
       - '${DB_PORT}:5432'
     environment:
@@ -14,19 +14,6 @@ services:
       backend:
         aliases:
           - postgres
-
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    ports:
-      - '5672:5672'
-      - '15672:15672'
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-    networks:
-      backend:
-        aliases:
-          - rabbitmq
 
   chathistories:
     build:
@@ -49,6 +36,9 @@ services:
       backend:
         aliases:
           - chathistories
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
 
 networks:
   backend:
