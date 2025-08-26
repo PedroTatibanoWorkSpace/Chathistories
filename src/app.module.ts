@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './common/infrastructure/database/database.module';
-import { ScheduleAppModule } from './common/infrastructure/schedule/schedule.module';
 import { AccountModule } from './modules/accounts/account.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -13,6 +12,8 @@ import { ChatTagsModule } from './modules/chat-tags/chat-tags.module';
 import { MessageProductsModule } from './modules/message-products/message-products.module';
 import { MessageEditsModule } from './modules/message-edits/message-edits.module';
 import { ChatDelegationModule } from './modules/chat-delegation/chat-delegation.module';
+import { UsersModule } from './modules/users/users.module';
+import { AuthModule } from './modules/auth/req.module';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { ChatDelegationModule } from './modules/chat-delegation/chat-delegation.
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
     }),
     DatabaseModule,
-    ScheduleAppModule,
+    AuthModule,
     AccountModule,
     PhonesModule,
     ChatsModule,
@@ -30,7 +31,8 @@ import { ChatDelegationModule } from './modules/chat-delegation/chat-delegation.
     ChatFunnelStepsModule,
     ChatTagsModule,
     MessageProductsModule,
-    MessageEditsModule
+    MessageEditsModule,
+    UsersModule
   ],
   controllers: [AppController],
   providers: [AppService],
