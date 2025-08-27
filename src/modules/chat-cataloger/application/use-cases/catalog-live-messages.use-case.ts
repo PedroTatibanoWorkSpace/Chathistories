@@ -1,170 +1,164 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import {
-  CatalogLiveMessagesPort,
-  CatalogLiveMessagesStats,
-  CatalogLiveMessagesOptions,
-} from '../../domain/ports/inbounds/catalog-live-messages.port';
-import type {
-  ChatGuruRequestPort,
-  MessageData,
-} from '../../domain/ports/outbounds/chatguru-request.port';
+import { CatalogLiveMessagesPort } from '../../domain/ports/inbounds/catalog-live-messages.port';
+import type { ChatGuruRequestPort, MessageData } from '../../domain/ports/outbounds/chatguru-request.port';
 import { ChatService } from '../services/chat.service';
 import { MessageService } from '../services/message.service';
 import type { MessageRepositoryPort } from 'src/modules/messages/domain/ports/outbounds/message.repository.port';
 import { In } from 'typeorm';
+import { HelpersService } from '../services/helpers.service';
 
 @Injectable()
 export class CatalogLiveMessagesUseCase implements CatalogLiveMessagesPort {
   private readonly logger = new Logger(CatalogLiveMessagesUseCase.name);
 
+  private readonly bootTimestamp = Date.now();
+
+  private lastGlobalPollTimestamp = this.bootTimestamp;
+  private isRunning = false;
+
   constructor(
-    @Inject('ChatGuruRequestPort')
-    private readonly chatGuruService: ChatGuruRequestPort,
+    @Inject('ChatGuruRequestPort') private readonly chatGuruService: ChatGuruRequestPort,
     private readonly chatService: ChatService,
+    private readonly helpersService: HelpersService,
     private readonly messageService: MessageService,
-    @Inject('MessageRepositoryPort')
-    private readonly messageRepository: MessageRepositoryPort,
+    @Inject('MessageRepositoryPort') private readonly messageRepository: MessageRepositoryPort,
   ) {}
 
-  async pollNewChatsAndMessages() {
+  async execute() {
+    if (this.isRunning) {
+      this.logger.warn('Skip: execução anterior ainda em andamento.');
+      return;
+    }
+    this.isRunning = true;
+
+    this.logger.log('Iniciando execução do polling de mensagens...');
     try {
+      const maxPagesPerRun = 8;
+      let page = 0;
+      let pagesFetched = 0;
+      let shouldContinuePages = true;
 
-      const chatListResponse = await this.chatGuruService.getChatList(0, {
-        filter_new_messages: true,
-      });
+      let runMaxChatTs = this.lastGlobalPollTimestamp;
 
-      for (const chat of chatListResponse.chats) {
-        await this.chatService.ensureChatExists(chat);
-
-        const lastSavedMessage = await this.messageRepository.find({
-          chatExternalId: chat.id,
+      while (shouldContinuePages && pagesFetched < maxPagesPerRun) {
+        this.logger.log(`🔄 Buscando página de chats: page=${page}`);
+        const chatListResponse = await this.chatGuruService.getChatList(page, {
+          filter_order_by: '-date_last_message',
         });
-        let lastTimestamp: number | null = null;
-        if (lastSavedMessage.length > 0) {
-          lastTimestamp = Math.max(
-            ...lastSavedMessage.map((m) => m.timestamp.getTime()),
-          );
+
+        if (!chatListResponse?.chats?.length) {
+          this.logger.log(`❌ Nenhum chat retornado na página ${page}.`);
+          break;
         }
 
-        const messagesResponse = await this.chatGuruService.getMessages(
-          chat.id,
-          1,
-        );
+        for (const chat of chatListResponse.chats) {
+          this.logger.log(`➡️ Processando chat: ${chat.id}`);
+          const chatLastStr = (chat as any).last_message?.date ?? (chat as any).updated ?? null;
+          const chatLastTs = chatLastStr ? new Date(chatLastStr).getTime() : 0;
 
-        const messagesData: MessageData[] =
-          messagesResponse.messages_and_notes
-            .filter(wrapper => wrapper.m && wrapper.m._id)
-            .map(wrapper => wrapper.m);
+          if (chatLastTs <= this.bootTimestamp) {
+            this.logger.log(`⏹️ Chat ${chat.id} é mais antigo que bootTimestamp, interrompendo paginação de chats.`);
+            shouldContinuePages = false;
+            break;
+          }
 
-        const newMessages = lastTimestamp
-          ? messagesData.filter(
-              (m) => new Date(m.timestamp.$date).getTime() > lastTimestamp,
-            )
-          : messagesData;
+          if (chatLastTs > runMaxChatTs) runMaxChatTs = chatLastTs;
 
-        const existingMessages = await this.messageRepository.find({
-          externalId: In(newMessages.map((m) => m._id.$oid)),
-        });
-        const existingSet = new Set(existingMessages.map((e) => e.externalId));
+          await this.chatService.ensureChatExists(chat);
 
-        for (const messageData of newMessages) {
-          const externalId = messageData._id.$oid;
-          if (existingSet.has(externalId)) continue;
-          const message =
-            await this.messageService.buildMessageEntity(messageData);
-          await this.messageRepository.create(message);
+          const lastSavedTs = await this.getLastSavedTimestamp(chat.id);
+          this.logger.log(`Último timestamp salvo para chat ${chat.id}: ${lastSavedTs}`);
+
+          if (lastSavedTs && chatLastTs <= lastSavedTs) {
+            this.logger.log(`Chat ${chat.id} já está atualizado, pulando.`);
+            continue;
+          }
+
+          let msgPage = 1;
+          const processedIds = new Set<string>();
+          const batchSize = 300;
+          let buffer: any[] = [];
+          let lastPageIds: string[] = [];
+
+          while (true) {
+            this.logger.log(`🔄 Buscando página ${msgPage} de mensagens do chat ${chat.id}`);
+            const msgsResp = await this.chatGuruService.getMessages(chat.id, msgPage);
+            const messagesData: MessageData[] = (msgsResp?.messages_and_notes || [])
+              .filter(w => w?.m?._id).map(w => w.m);
+
+            this.logger.log(`Página ${msgPage} retornou ${messagesData.length} mensagens para chat ${chat.id}`);
+
+            if (!messagesData.length) {
+              this.logger.log(`Fim das mensagens para chat ${chat.id} na página ${msgPage}.`);
+              break;
+            }
+
+            const currentPageIds = messagesData.map(m => m._id.$oid);
+
+            if (
+              lastPageIds.length > 0 &&
+              currentPageIds.every(id => lastPageIds.includes(id))
+            ) {
+              this.logger.warn(`⚠️ Página ${msgPage} de mensagens do chat ${chat.id} não trouxe novas mensagens, interrompendo paginação.`);
+              break;
+            }
+            lastPageIds = currentPageIds;
+
+            const fresh = (lastSavedTs)
+              ? messagesData.filter(m => this.helpersService.normalizeMessageTs(m) > lastSavedTs)
+              : messagesData.filter(m => this.helpersService.normalizeMessageTs(m) > this.bootTimestamp);
+
+            if (!fresh.length) {
+              break;
+            }
+
+            const extIds = fresh.map(m => m._id.$oid);
+            const existing = await this.messageRepository.find({ externalId: In(extIds) });
+            const existingSet = new Set(existing.map(e => e.externalId));
+
+            for (const m of fresh) {
+              const ext = m._id.$oid;
+              if (processedIds.has(ext) || existingSet.has(ext)) continue;
+
+              const entity = await this.messageService.buildMessageEntity(m);
+              buffer.push(entity);
+              processedIds.add(ext);
+
+              if (buffer.length >= batchSize) {
+                await (this.messageRepository as any).createManyIgnoreConflicts?.(buffer.splice(0, batchSize))
+                  ?? this.messageRepository.createMany(buffer.splice(0, batchSize) as any);
+              }
+            }
+
+            if (buffer.length > 0) {
+              await (this.messageRepository as any).createManyIgnoreConflicts?.(buffer)
+                ?? this.messageRepository.createMany(buffer as any);
+              buffer = [];
+            }
+
+            msgPage++;
+          }
         }
+
+        page++;
+        pagesFetched++;
       }
-      this.logger.debug('Polling de chats/mensagens concluído.');
+
+      this.lastGlobalPollTimestamp = Math.max(this.lastGlobalPollTimestamp, runMaxChatTs);
     } catch (error) {
-      this.logger.error('Erro no polling:', error.message);
+      this.logger.error('Erro no polling:', error.stack ?? error.message);
+    } finally {
+      this.logger.log('Finalizando execução do polling de mensagens.');
+      this.isRunning = false;
     }
   }
 
-  async execute(
-    options: CatalogLiveMessagesOptions = {},
-  ): Promise<CatalogLiveMessagesStats> {
-    const { filters = {} } = options;
-
-    const stats: CatalogLiveMessagesStats = {
-      totalChatsProcessed: 0,
-      totalMessagesProcessed: 0,
-      startTime: new Date(),
-      endTime: new Date(),
-      durationMs: 0,
-      errors: [],
-    };
-
-    this.logger.log('🚀 Iniciando catalogação rápida de mensagens (live)...');
-
-    try {
-      const chatListResponse = await this.chatGuruService.getChatList(0, {
-        ...filters,
-        filter_new_messages: true,
-      });
-      for (const chat of chatListResponse.chats) {
-        try {
-          await this.chatService.ensureChatExists(chat);
-          stats.totalChatsProcessed++;
-
-          const lastSavedMessage = await this.messageRepository.find({
-            chatExternalId: chat.id,
-          });
-          let lastTimestamp: number | null = null;
-          if (lastSavedMessage.length > 0) {
-            lastTimestamp = Math.max(
-              ...lastSavedMessage.map((m) => m.timestamp.getTime()),
-            );
-          }
-
-          const messagesResponse = await this.chatGuruService.getMessages(
-            chat.id,
-            1,
-          );
-
-          const messagesData: MessageData[] =
-            messagesResponse.messages_and_notes
-              .filter(wrapper => wrapper.m && wrapper.m._id)
-              .map(wrapper => wrapper.m);
-
-          const newMessages = lastTimestamp
-            ? messagesData.filter(
-                (m) => new Date(m.timestamp.$date).getTime() > lastTimestamp,
-              )
-            : messagesData;
-
-          const existingMessages = await this.messageRepository.find({
-            externalId: In(newMessages.map((m) => m._id.$oid)),
-          });
-          const existingSet = new Set(
-            existingMessages.map((e) => e.externalId),
-          );
-
-          for (const messageData of newMessages) {
-            const externalId = messageData._id.$oid;
-            if (existingSet.has(externalId)) continue;
-            const message =
-              await this.messageService.buildMessageEntity(messageData);
-            await this.messageRepository.create(message);
-            stats.totalMessagesProcessed++;
-          }
-        } catch (error) {
-          stats.errors.push({
-            chatId: chat.id,
-            error: `Erro ao processar chat/mensagens: ${error.message}`,
-            timestamp: new Date(),
-          });
-        }
-      }
-      stats.endTime = new Date();
-      stats.durationMs = stats.endTime.getTime() - stats.startTime.getTime();
-    } catch (error) {
-      stats.errors.push({
-        error: `Erro crítico no polling: ${error.message}`,
-        timestamp: new Date(),
-      });
+  private async getLastSavedTimestamp(chatExternalId: string): Promise<number> {
+    if ((this.messageRepository as any).findLastMessageTimestamp) {
+      const ts = await (this.messageRepository as any).findLastMessageTimestamp(chatExternalId);
+      if (ts) return ts;
     }
-    return stats;
+    return this.bootTimestamp; 
   }
 }
+

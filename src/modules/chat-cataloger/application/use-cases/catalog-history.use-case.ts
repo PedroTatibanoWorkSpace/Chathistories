@@ -9,7 +9,6 @@ import { MessageService } from '../services/message.service';
 import { HelpersService } from '../services/helpers.service';
 import { ChatService } from '../services/chat.service';
 import type { MessageRepositoryPort } from 'src/modules/messages/domain/ports/outbounds/message.repository.port';
-import { In } from 'typeorm';
 
 @Injectable()
 export class CatalogHistoryUseCase implements CatalogHistoryPort {
@@ -53,6 +52,14 @@ export class CatalogHistoryUseCase implements CatalogHistoryPort {
 
     try {
       this.logger.log('📋 Iniciando catalogação de mensagens...');
+
+      await this.catalogAllChats(stats, {
+        batchSize,
+        delayBetweenRequests,
+        retryAttempts,
+        resumeFromChatId,
+      });
+
       await this.catalogAllMessages(stats, {
         maxConcurrentChats,
         maxConcurrentMessages,
@@ -177,7 +184,7 @@ export class CatalogHistoryUseCase implements CatalogHistoryPort {
       retryAttempts: number;
     },
   ): Promise<void> {
-    this.logger.log('📋 Fase 2: Catalogando mensagens de todos os chats...');
+    this.logger.log('Fase 2: Catalogando mensagens de todos os chats...');
 
     const allChatIds = await this.chatService.getAllChatIds();
 
@@ -221,12 +228,12 @@ export class CatalogHistoryUseCase implements CatalogHistoryPort {
               .map((wrapper) => wrapper.m);
 
             if (messagesData.length === 0) {
-              this.logger.log(`✅ Não há mais mensagens para o chat ID ${chatId}.`);
+              this.logger.log(
+                `✅ Não há mais mensagens para o chat ID ${chatId}.`,
+              );
               hasMore = false;
               break;
             }
-
-          
 
             let newCount = 0;
             for (const messageData of messagesData) {
