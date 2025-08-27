@@ -9,8 +9,6 @@ import { ChatsModule } from './modules/chats/chats.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { ChatFunnelStepsModule } from './modules/chat-funnel-steps/chat-funnel-steps.module';
 import { ChatTagsModule } from './modules/chat-tags/chat-tags.module';
-import { MessageProductsModule } from './modules/message-products/message-products.module';
-import { MessageEditsModule } from './modules/message-edits/message-edits.module';
 import { ChatDelegationModule } from './modules/chat-delegation/chat-delegation.module';
 import { UsersModule } from './modules/users/users.module';
 import { ChatCatalogerModule } from './modules/chat-cataloger/chat-cataloger.module';
@@ -29,8 +27,6 @@ import { ChatCatalogerModule } from './modules/chat-cataloger/chat-cataloger.mod
     ChatDelegationModule,
     ChatFunnelStepsModule,
     ChatTagsModule,
-    MessageProductsModule,
-    MessageEditsModule,
     UsersModule,
     ChatCatalogerModule
   ],
