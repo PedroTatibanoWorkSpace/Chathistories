@@ -77,15 +77,14 @@ export class ChatGuruRequestService implements ChatGuruRequestPort {
     }
   }
 
-  async getMessages(chatId: string, page: number = 1, lastFirstId?: string): Promise<MessagesResponse & { repeated?: boolean }> {
+  async getMessages(chatId: string, page: number = 1): Promise<MessagesResponse & { repeated?: boolean }> {
     const url = `${this.baseUrl}/messages2/${chatId}/page/${page}`;
     try {
       const response = await this.httpClient.get<MessagesResponse>(url);
       const data = response.data;
-
-      return { ...data };
+      return data;
     } catch (error) {
-      this.logger.error(`Failed to get messages for chat ${chatId}, page ${page}:`, error.message);
+      this.logger.error(`Falha ao buscar mensagens para o chat ${chatId}, página ${page}:`, error.message);
       throw error;
     }
   }
