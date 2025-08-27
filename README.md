@@ -1,98 +1,172 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Chathistories
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Principais Requisitos Atendidos
 
-## Description
+- **Framework:** NestJS (estrutura modular, escalável e testável)
+- **Banco de Dados:** PostgreSQL + TimescaleDB (Hypertable para mensagens, escolhido por sua alta performance em grandes volumes e consultas temporais)
+- **Autenticação:** API Key global (header `x-api-key`) e integração via cookie com ChatGuru
+- **Modelagem:** Todas entidades relevantes (contas, usuários, telefones, chats, mensagens, delegações, tags, funnel steps) com migrations e relacionamentos
+- **Algoritmo de Catalogação:** Batches concorrentes, controle de erros, estatísticas de tempo, timezone tratado com Luxon
+- **Catalogação em Tempo Real:** Polling a cada 5 segundos, busca apenas mensagens novas, evita duplicidade, insere em batches
+- **Consulta Paginável:** Endpoints para consulta de histórico por telefone, paginado
+- **Segurança:** Guard global de API Key, variáveis de ambiente para credenciais
+- **Docker:** Deploy facilitado, pronto para Ubuntu
+- **Registro de Tempo:** Estatísticas de execução registradas em prompt, poderia escalar para um grafna ou prometheus
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## Arquitetura
 
-```bash
-$ yarn install
+- **Modularização:** Cada entidade (users, phones, chats, messages, etc.) possui seu próprio módulo, DTOs, use cases, repositórios e mapeadores.
+- **Arquitetura Hexagonal:** Separação clara entre domínio, aplicação e infraestrutura, facilitando testes, manutenção e integração com futuras features
+- **Banco de Dados:**  
+  - **PostgreSQL**: robusto, confiável, amplamente utilizado.
+  - **TimescaleDB**: extensão para dados temporais, cria hypertables para mensagens a cada 7 dias, garantindo performance e escalabilidade.
+- **Agendamento:** Polling de mensagens em tempo real usando `@nestjs/schedule` (cron a cada 5 segundos).
+- **Segurança:** Guard global de API Key;
+- **Docker:** Compose para banco e app.
+
+---
+
+## Como Rodar o Projeto
+
+
+### 2. Configure o arquivo de variáveis de ambiente
+
+Crie o arquivo `.env.development` na raiz do projeto:
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=chathistories_user
+DB_PASSWORD=ch4th1st0r13s_p4ssw0rd
+DB_DATABASE=chathistories_db
+
+API_KEY=seu_api_key_aqui
+
+CHATGURU_URL=https://s20.chatguru.app
+CHATGURU_EMAIL=seu_email_chatguru
+CHATGURU_PASSWORD=sua_senha_chatguru
+CHATGURU_COOKIE=<cookie_do_painel_chatguru>
+
+APP_ENV=development
+APP_PORT=3000
+TZ=America/Sao_Paulo
 ```
 
-## Compile and run the project
+> **Atenção:**  
+> - O valor de `CHATGURU_COOKIE` deve ser obtido diretamente do painel do ChatGuru, após login.
+> - O valor de `API_KEY` será utilizado no header `x-api-key` para autenticação nas requisições à API.
+
+### 3. Suba o banco e o serviço via Docker
 
 ```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+docker-compose up -d
 ```
 
-## Run tests
+### 4. Instale as dependências
 
 ```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+yarn install
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 5. Rode o serviço em modo desenvolvimento
 
 ```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+yarn start:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+## Endpoints Principais
 
-Check out a few resources that may come in handy when working with NestJS:
+### 1. Catalogar histórico completo
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Inicia a catalogação de todos os chats e mensagens do passado.
 
-## Support
+```bash
+curl -X POST http://localhost:3000/catalog-history -H "x-api-key: seu_api_key_aqui"
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### 2. Catalogação em tempo real (Polling)
 
-## Stay in touch
+Habilite/desabilite o polling de mensagens novas:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+# Habilitar polling
+curl -X POST http://localhost:3000/catalog-live-messages/enable-cron -H "x-api-key: seu_api_key_aqui"
 
-## License
+# Desabilitar polling
+curl -X POST http://localhost:3000/catalog-live-messages/disable-cron -H "x-api-key: seu_api_key_aqui"
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+# Verificar status do polling
+curl -X GET http://localhost:3000/catalog-live-messages/cron-status -H "x-api-key: seu_api_key_aqui"
+```
+
+### 3. Consulta paginável de mensagens por telefone
+
+```bash
+curl -X GET "http://localhost:3000/messages?phone=5511999999999&limit=50&page=1" -H "x-api-key: seu_api_key_aqui"
+```
+
+---
+
+## Estrutura dos Módulos
+
+- **accounts/**: Gerenciamento de contas
+- **users/**: Usuários do sistema
+- **phones/**: Telefones vinculados
+- **chats/**: Chats do WhatsApp
+- **messages/**: Mensagens (Hypertable TimescaleDB)
+- **chat-tags/**: Tags dos chats
+- **chat-funnel-steps/**: Etapas do funil de atendimento
+- **chat-delegation/**: Delegações de chats para agentes
+- **chat-cataloger/**: Use cases de catalogação, integração com ChatGuru
+
+---
+
+## Segurança
+
+- **API Key:** Todas as rotas protegidas por guard global.  
+  Envie sempre o header `x-api-key` nas requisições.
+- **Variáveis de ambiente:** Nunca exponha credenciais no código.
+- **Pronto para expansão:** Fácil adicionar JWT, rate limiting, CORS, etc.
+
+---
+
+## Banco de Dados
+
+- **PostgreSQL:**  
+  - Confiável, escalável, fácil de administrar.
+- **TimescaleDB:**  
+  - Hypertable para mensagens, ideal para grandes volumes e consultas temporais.
+  - Migrations criam índices e relacionamentos para máxima performance.
+
+---
+
+## Instalação em Servidor Ubuntu
+
+1. Instale Docker e Docker Compose.
+2. Configure o `.env.development` conforme exemplo.
+3. Execute:
+
+```bash
+docker-compose up -d
+```
+
+---
+
+## Monitoramento e Estatísticas
+
+- O tempo total de execução da catalogação é registrado.
+- Logs detalhados de erros e execuções.
+- Pronto para integração com Prometheus/Grafana.
+
+---
+
+## Observações Técnicas
+
+- **Autenticação via cookie:** O microserviço simula requisições do frontend do ChatGuru, usando cookies para autenticação.
+- **Timezone:** Todas as datas são tratadas com Luxon, garantindo integridade temporal.
+- **Escalabilidade:** Estrutura pronta para horizontalização e alta concorrência.
