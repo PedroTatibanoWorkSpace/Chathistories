@@ -5,4 +5,7 @@ export interface CatalogLiveMessagesOptions {
 
 export interface CatalogLiveMessagesPort {
   execute(options?: CatalogLiveMessagesOptions): Promise<void>;
+  enableCron(): void;
+  disableCron(): void;
+  isCronActive(): boolean;
 }

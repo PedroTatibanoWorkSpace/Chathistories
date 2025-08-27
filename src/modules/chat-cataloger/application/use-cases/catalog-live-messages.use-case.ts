@@ -1,11 +1,15 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { CatalogLiveMessagesPort } from '../../domain/ports/inbounds/catalog-live-messages.port';
-import type { ChatGuruRequestPort, MessageData } from '../../domain/ports/outbounds/chatguru-request.port';
+import type {
+  ChatGuruRequestPort,
+  MessageData,
+} from '../../domain/ports/outbounds/chatguru-request.port';
 import { ChatService } from '../services/chat.service';
 import { MessageService } from '../services/message.service';
 import type { MessageRepositoryPort } from 'src/modules/messages/domain/ports/outbounds/message.repository.port';
 import { In } from 'typeorm';
 import { HelpersService } from '../services/helpers.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class CatalogLiveMessagesUseCase implements CatalogLiveMessagesPort {
@@ -15,18 +19,25 @@ export class CatalogLiveMessagesUseCase implements CatalogLiveMessagesPort {
 
   private lastGlobalPollTimestamp = this.bootTimestamp;
   private isRunning = false;
+  private cronEnabled = false;
 
   constructor(
-    @Inject('ChatGuruRequestPort') private readonly chatGuruService: ChatGuruRequestPort,
+    @Inject('ChatGuruRequestPort')
+    private readonly chatGuruService: ChatGuruRequestPort,
     private readonly chatService: ChatService,
     private readonly helpersService: HelpersService,
     private readonly messageService: MessageService,
-    @Inject('MessageRepositoryPort') private readonly messageRepository: MessageRepositoryPort,
+    @Inject('MessageRepositoryPort')
+    private readonly messageRepository: MessageRepositoryPort,
   ) {}
 
+  @Cron(CronExpression.EVERY_5_SECONDS)
   async execute() {
+    if (!this.cronEnabled) {
+      return;
+    }
+
     if (this.isRunning) {
-      this.logger.warn('Skip: execução anterior ainda em andamento.');
       return;
     }
     this.isRunning = true;
@@ -53,11 +64,14 @@ export class CatalogLiveMessagesUseCase implements CatalogLiveMessagesPort {
 
         for (const chat of chatListResponse.chats) {
           this.logger.log(`➡️ Processando chat: ${chat.id}`);
-          const chatLastStr = (chat as any).last_message?.date ?? (chat as any).updated ?? null;
+          const chatLastStr =
+            (chat as any).last_message?.date ?? (chat as any).updated ?? null;
           const chatLastTs = chatLastStr ? new Date(chatLastStr).getTime() : 0;
 
           if (chatLastTs <= this.bootTimestamp) {
-            this.logger.log(`⏹️ Chat ${chat.id} é mais antigo que bootTimestamp, interrompendo paginação de chats.`);
+            this.logger.log(
+              `⏹️ Chat ${chat.id} é mais antigo que bootTimestamp, interrompendo paginação de chats.`,
+            );
             shouldContinuePages = false;
             break;
           }
@@ -67,7 +81,9 @@ export class CatalogLiveMessagesUseCase implements CatalogLiveMessagesPort {
           await this.chatService.ensureChatExists(chat);
 
           const lastSavedTs = await this.getLastSavedTimestamp(chat.id);
-          this.logger.log(`Último timestamp salvo para chat ${chat.id}: ${lastSavedTs}`);
+          this.logger.log(
+            `Último timestamp salvo para chat ${chat.id}: ${lastSavedTs}`,
+          );
 
           if (lastSavedTs && chatLastTs <= lastSavedTs) {
             this.logger.log(`Chat ${chat.id} já está atualizado, pulando.`);
@@ -81,40 +97,63 @@ export class CatalogLiveMessagesUseCase implements CatalogLiveMessagesPort {
           let lastPageIds: string[] = [];
 
           while (true) {
-            this.logger.log(`🔄 Buscando página ${msgPage} de mensagens do chat ${chat.id}`);
-            const msgsResp = await this.chatGuruService.getMessages(chat.id, msgPage);
-            const messagesData: MessageData[] = (msgsResp?.messages_and_notes || [])
-              .filter(w => w?.m?._id).map(w => w.m);
+            this.logger.log(
+              `🔄 Buscando página ${msgPage} de mensagens do chat ${chat.id}`,
+            );
+            const msgsResp = await this.chatGuruService.getMessages(
+              chat.id,
+              msgPage,
+            );
+            const messagesData: MessageData[] = (
+              msgsResp?.messages_and_notes || []
+            )
+              .filter((w) => w?.m?._id)
+              .map((w) => w.m);
 
-            this.logger.log(`Página ${msgPage} retornou ${messagesData.length} mensagens para chat ${chat.id}`);
+            this.logger.log(
+              `Página ${msgPage} retornou ${messagesData.length} mensagens para chat ${chat.id}`,
+            );
 
             if (!messagesData.length) {
-              this.logger.log(`Fim das mensagens para chat ${chat.id} na página ${msgPage}.`);
+              this.logger.log(
+                `Fim das mensagens para chat ${chat.id} na página ${msgPage}.`,
+              );
               break;
             }
 
-            const currentPageIds = messagesData.map(m => m._id.$oid);
+            const currentPageIds = messagesData.map((m) => m._id.$oid);
 
             if (
               lastPageIds.length > 0 &&
-              currentPageIds.every(id => lastPageIds.includes(id))
+              currentPageIds.every((id) => lastPageIds.includes(id))
             ) {
-              this.logger.warn(`⚠️ Página ${msgPage} de mensagens do chat ${chat.id} não trouxe novas mensagens, interrompendo paginação.`);
+              this.logger.warn(
+                `⚠️ Página ${msgPage} de mensagens do chat ${chat.id} não trouxe novas mensagens, interrompendo paginação.`,
+              );
               break;
             }
             lastPageIds = currentPageIds;
 
-            const fresh = (lastSavedTs)
-              ? messagesData.filter(m => this.helpersService.normalizeMessageTs(m) > lastSavedTs)
-              : messagesData.filter(m => this.helpersService.normalizeMessageTs(m) > this.bootTimestamp);
+            const fresh = lastSavedTs
+              ? messagesData.filter(
+                  (m) =>
+                    this.helpersService.normalizeMessageTs(m) > lastSavedTs,
+                )
+              : messagesData.filter(
+                  (m) =>
+                    this.helpersService.normalizeMessageTs(m) >
+                    this.bootTimestamp,
+                );
 
             if (!fresh.length) {
               break;
             }
 
-            const extIds = fresh.map(m => m._id.$oid);
-            const existing = await this.messageRepository.find({ externalId: In(extIds) });
-            const existingSet = new Set(existing.map(e => e.externalId));
+            const extIds = fresh.map((m) => m._id.$oid);
+            const existing = await this.messageRepository.find({
+              externalId: In(extIds),
+            });
+            const existingSet = new Set(existing.map((e) => e.externalId));
 
             for (const m of fresh) {
               const ext = m._id.$oid;
@@ -125,14 +164,20 @@ export class CatalogLiveMessagesUseCase implements CatalogLiveMessagesPort {
               processedIds.add(ext);
 
               if (buffer.length >= batchSize) {
-                await (this.messageRepository as any).createManyIgnoreConflicts?.(buffer.splice(0, batchSize))
-                  ?? this.messageRepository.createMany(buffer.splice(0, batchSize) as any);
+                (await (
+                  this.messageRepository as any
+                ).createManyIgnoreConflicts?.(buffer.splice(0, batchSize))) ??
+                  this.messageRepository.createMany(
+                    buffer.splice(0, batchSize) as any,
+                  );
               }
             }
 
             if (buffer.length > 0) {
-              await (this.messageRepository as any).createManyIgnoreConflicts?.(buffer)
-                ?? this.messageRepository.createMany(buffer as any);
+              (await (
+                this.messageRepository as any
+              ).createManyIgnoreConflicts?.(buffer)) ??
+                this.messageRepository.createMany(buffer as any);
               buffer = [];
             }
 
@@ -144,7 +189,10 @@ export class CatalogLiveMessagesUseCase implements CatalogLiveMessagesPort {
         pagesFetched++;
       }
 
-      this.lastGlobalPollTimestamp = Math.max(this.lastGlobalPollTimestamp, runMaxChatTs);
+      this.lastGlobalPollTimestamp = Math.max(
+        this.lastGlobalPollTimestamp,
+        runMaxChatTs,
+      );
     } catch (error) {
       this.logger.error('Erro no polling:', error.stack ?? error.message);
     } finally {
@@ -155,10 +203,25 @@ export class CatalogLiveMessagesUseCase implements CatalogLiveMessagesPort {
 
   private async getLastSavedTimestamp(chatExternalId: string): Promise<number> {
     if ((this.messageRepository as any).findLastMessageTimestamp) {
-      const ts = await (this.messageRepository as any).findLastMessageTimestamp(chatExternalId);
+      const ts = await (this.messageRepository as any).findLastMessageTimestamp(
+        chatExternalId,
+      );
       if (ts) return ts;
     }
-    return this.bootTimestamp; 
+    return this.bootTimestamp;
+  }
+
+  public enableCron() {
+    this.cronEnabled = true;
+    this.logger.log('Polling habilitado via endpoint.');
+  }
+
+  public disableCron() {
+    this.cronEnabled = false;
+    this.logger.log('Polling desabilitado via endpoint.');
+  }
+
+  public isCronActive() {
+    return this.cronEnabled;
   }
 }
-

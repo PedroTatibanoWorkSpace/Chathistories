@@ -10,7 +10,6 @@ import { PhonesModule } from '../phones/phones.module';
 import { ChatFunnelStepsModule } from '../chat-funnel-steps/chat-funnel-steps.module';
 import { ChatTagsModule } from '../chat-tags/chat-tags.module';
 import { CatalogHistoryController } from './infrastructure/inbound/presentation/catalog-history.controller';
-import { CatalogLiveMessagesController } from './infrastructure/inbound/presentation/catalog-live-messages.controller';
 import { AccountService } from './application/services/account.service';
 import { PhoneService } from './application/services/phone.service';
 import { UserService } from './application/services/user.service';
@@ -20,6 +19,7 @@ import { HelpersService } from './application/services/helpers.service';
 import { ChatDelegationsService } from './application/services/chat-delegations.service';
 import { ChatFunnelStepsService } from './application/services/chat-funnel-steps.service';
 import { ChatTagsService } from './application/services/chat-tags.service';
+import { CatalogLiveMessagesController } from './infrastructure/inbound/presentation/catalog-live.controller';
 
 @Module({
   imports: [
@@ -33,10 +33,7 @@ import { ChatTagsService } from './application/services/chat-tags.service';
     ChatFunnelStepsModule,
     ChatTagsModule,
   ],
-  controllers: [
-    CatalogHistoryController,
-    CatalogLiveMessagesController,
-  ],
+  controllers: [CatalogHistoryController, CatalogLiveMessagesController],
   providers: [
     ...ChatCatalogerProviders,
     AccountService,
@@ -49,6 +46,10 @@ import { ChatTagsService } from './application/services/chat-tags.service';
     ChatFunnelStepsService,
     ChatTagsService,
   ],
-  exports: ['CatalogHistoryPort', 'ChatGuruRequestPort', 'CatalogLiveMessagesPort'],
+  exports: [
+    'CatalogHistoryPort',
+    'ChatGuruRequestPort',
+    'CatalogLiveMessagesPort',
+  ],
 })
 export class ChatCatalogerModule {}
