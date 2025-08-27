@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { DatabaseModule } from './common/infrastructure/database/database.module';
 import { AccountModule } from './modules/accounts/account.module';
 import { AppController } from './app.controller';
@@ -19,6 +20,7 @@ import { ChatCatalogerModule } from './modules/chat-cataloger/chat-cataloger.mod
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
     }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     AccountModule,
     PhonesModule,

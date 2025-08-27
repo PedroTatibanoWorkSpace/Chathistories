@@ -23,7 +23,6 @@ export class MessageService {
     private readonly userService: UserService,
   ) {}
 
-
   async buildMessageEntity(messageData: MessageData): Promise<Message> {
     const chatId = await this.chatService.ensureChatExists({
       id: messageData.chat.$oid,
@@ -92,5 +91,19 @@ export class MessageService {
       products: messageData.products,
       edits,
     });
+  }
+
+  async ensureMessageExists(messageData: MessageData): Promise<string> {
+    const existingMessage = await this.messageRepository.findMessageByExternalId(
+      messageData._id.$oid,
+    );
+
+    if (!existingMessage) {
+      const message = await this.buildMessageEntity(messageData);
+      const createdMessage = await this.messageRepository.create(message);
+      return createdMessage.id;
+    }
+
+    return existingMessage.id;
   }
 }

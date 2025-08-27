@@ -10,6 +10,15 @@ export class HelpersService {
       throw new Error('Data inválida ou ausente.');
     }
 
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(dateString)) {
+      const parsedDate = DateTime.fromISO(dateString);
+      if (!parsedDate.isValid) {
+        this.logger.warn(`⚠️ Erro ao converter data: ${dateString}.`);
+        throw new Error(`Data inválida: ${dateString}`);
+      }
+      return parsedDate.toJSDate();
+    }
+
     const fixedDateString = dateString.replace(
       /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\d{3}/,
       '$1',

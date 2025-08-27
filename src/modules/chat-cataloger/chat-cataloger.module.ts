@@ -10,6 +10,7 @@ import { PhonesModule } from '../phones/phones.module';
 import { ChatFunnelStepsModule } from '../chat-funnel-steps/chat-funnel-steps.module';
 import { ChatTagsModule } from '../chat-tags/chat-tags.module';
 import { CatalogHistoryController } from './infrastructure/inbound/presentation/catalog-history.controller';
+import { CatalogLiveMessagesController } from './infrastructure/inbound/presentation/catalog-live-messages.controller';
 import { AccountService } from './application/services/account.service';
 import { PhoneService } from './application/services/phone.service';
 import { UserService } from './application/services/user.service';
@@ -32,7 +33,10 @@ import { ChatTagsService } from './application/services/chat-tags.service';
     ChatFunnelStepsModule,
     ChatTagsModule,
   ],
-  controllers: [CatalogHistoryController],
+  controllers: [
+    CatalogHistoryController,
+    CatalogLiveMessagesController,
+  ],
   providers: [
     ...ChatCatalogerProviders,
     AccountService,
@@ -45,6 +49,6 @@ import { ChatTagsService } from './application/services/chat-tags.service';
     ChatFunnelStepsService,
     ChatTagsService,
   ],
-  exports: ['CatalogHistoryPort', 'ChatGuruRequestPort'],
+  exports: ['CatalogHistoryPort', 'ChatGuruRequestPort', 'CatalogLiveMessagesPort'],
 })
 export class ChatCatalogerModule {}
