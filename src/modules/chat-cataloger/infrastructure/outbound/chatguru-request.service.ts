@@ -69,7 +69,6 @@ export class ChatGuruRequestService implements ChatGuruRequestPort {
         { params }
       );
       
-      this.logger.log(`Retrieved ${response.data.total_returned} chats from page ${pageNum}`);
       return response.data;
     } catch (error) {
       this.logger.error(`Failed to get chat list for page ${pageNum}:`, error.message);

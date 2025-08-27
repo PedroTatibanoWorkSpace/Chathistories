@@ -105,4 +105,15 @@ export class HelpersService {
     }
     return batches;
   }
+
+  normalizeMessageTs(m: any): number {
+    const raw =
+      m?.timestamp?.$date ??
+      m?.timestamp ??
+      m?.created_at ??
+      m?.created ??
+      m?.date ??
+      null;
+    return raw ? new Date(raw).getTime() : 0;
+  }
 }

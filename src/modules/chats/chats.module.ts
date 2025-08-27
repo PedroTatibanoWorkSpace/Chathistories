@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ChatOrmEntity } from './infrastructure/outbound/persistence/orm/chat-orm.entity';
 import { ChatsProviders } from './chats.di';
+import { PaginateChatsHandler } from './infrastructure/inbound/handlers/paginate-chats.handler';
 
 @Module({
   imports: [
@@ -9,6 +10,9 @@ import { ChatsProviders } from './chats.di';
   ],
   providers: [
     ...ChatsProviders,
+  ],
+  controllers:[
+    PaginateChatsHandler
   ],
   exports: [
     'CreateChatPort',

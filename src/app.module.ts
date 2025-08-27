@@ -13,6 +13,7 @@ import { ChatTagsModule } from './modules/chat-tags/chat-tags.module';
 import { ChatDelegationModule } from './modules/chat-delegation/chat-delegation.module';
 import { UsersModule } from './modules/users/users.module';
 import { ChatCatalogerModule } from './modules/chat-cataloger/chat-cataloger.module';
+import { GuardModule } from './common/infrastructure/guards/guard.module';
 
 @Module({
   imports: [
@@ -30,7 +31,8 @@ import { ChatCatalogerModule } from './modules/chat-cataloger/chat-cataloger.mod
     ChatFunnelStepsModule,
     ChatTagsModule,
     UsersModule,
-    ChatCatalogerModule
+    ChatCatalogerModule,
+    GuardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
