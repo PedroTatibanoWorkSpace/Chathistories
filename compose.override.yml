@@ -1,0 +1,10 @@
+version: '3.9'
+
+services:
+  chathistories:
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: yarn start:dev
+    environment:
+      APP_ENV: development

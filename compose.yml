@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  postgres:
+    platform: linux/amd64
+    image: timescale/timescaledb:latest-pg17
+    ports:
+      - '${DB_PORT}:5432'
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    networks:
+      backend:
+        aliases:
+          - postgres
+
+  chathistories:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+    ports:
+      - '3000:3000'
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+    networks:
+      backend:
+        aliases:
+          - chathistories
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+
+networks:
+  backend:
+    driver: bridge

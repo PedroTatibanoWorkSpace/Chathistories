@@ -1,0 +1,48 @@
+import { Message } from "../../entity/message.entity";
+
+export type CreateMessageProps = {
+  chatId: string;
+  phoneId: string;
+  accountId: string;
+  authorId?: string;
+  externalId: string;
+  chatExternalId: string;
+  phoneExternalId: string;
+  accountExternalId: string;
+  authorExternalId?: string;
+  waMessageId: string;
+  waSenderId: string;
+  senderName?: string;
+  status: number;
+  isApproved?: boolean;
+  type: number;
+  isOut: boolean;
+  ack: number;
+  isTemplate?: boolean;
+  optionsOpen?: boolean;
+  deleted?: boolean;
+  hide?: boolean;
+  processor?: number;
+  isForwarded?: boolean;
+  fromDevice?: boolean;
+  text?: string;
+  quotes?: string;
+  quotesType?: number;
+  quotesWaMessageId?: string;
+  quotesThumb?: string;
+  file?: any;
+  products?: any;
+  vcardContacts?: any;
+  metadata?: any;
+  botResponse?: any;
+  watsonResponse?: any;
+  errorDetails?: any;
+  edits?: any;
+  createdAt?: Date;
+  timestamp: Date;
+  sendDate?: Date;
+};
+
+export interface CreateMessagePort {
+  execute(props: CreateMessageProps): Promise<Message>;
+}
