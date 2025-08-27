@@ -9,7 +9,7 @@ import { ChatDelegationModule } from '../chat-delegation/chat-delegation.module'
 import { PhonesModule } from '../phones/phones.module';
 import { ChatFunnelStepsModule } from '../chat-funnel-steps/chat-funnel-steps.module';
 import { ChatTagsModule } from '../chat-tags/chat-tags.module';
-import { CatalogHistoryController } from './presentation/catalog-history.controller';
+import { CatalogHistoryController } from './infrastructure/inbound/presentation/catalog-history.controller';
 import { AccountService } from './application/services/account.service';
 import { PhoneService } from './application/services/phone.service';
 import { UserService } from './application/services/user.service';

@@ -12,9 +12,17 @@ export class CreateMessageInputDto {
   waSenderId: string;
   senderName?: string;
   status: number;
+  isApproved?: boolean;
   type: number;
   isOut: boolean;
   ack: number;
+  isTemplate?: boolean;
+  optionsOpen?: boolean;
+  deleted?: boolean;
+  hide?: boolean;
+  processor?: number;
+  isForwarded?: boolean;
+  fromDevice?: boolean;
   text?: string;
   quotes?: string;
   quotesType?: number;
@@ -28,6 +36,7 @@ export class CreateMessageInputDto {
   watsonResponse?: any;
   errorDetails?: any;
   edits?: any;
+  createdAt?: Date;
   timestamp: Date;
   sendDate?: Date;
 }

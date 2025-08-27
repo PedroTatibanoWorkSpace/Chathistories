@@ -11,4 +11,6 @@ export class CreateChatInputDto {
   archived?: boolean;
   scheduled?: boolean;
   newMessages?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

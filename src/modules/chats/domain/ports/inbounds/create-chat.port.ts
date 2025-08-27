@@ -13,6 +13,8 @@ export type CreateChatProps = {
   archived?: boolean;
   scheduled?: boolean;
   newMessages?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export interface CreateChatPort {

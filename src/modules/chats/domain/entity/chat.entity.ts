@@ -11,6 +11,8 @@ export type CreateChatProps = {
   archived?: boolean;
   scheduled?: boolean;
   newMessages?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export type ReconstructChatProps = {
@@ -71,6 +73,7 @@ export class Chat {
   ) {}
 
   static create(props: CreateChatProps): Chat {
+    const now = new Date();
     return new Chat(
       crypto.randomUUID(),
       props.externalId,
@@ -84,8 +87,8 @@ export class Chat {
       props.archived ?? false,
       props.scheduled ?? false,
       props.newMessages ?? 0,
-      new Date(),
-      new Date(),
+      props.createdAt || now,
+      props.updatedAt || now,
       props.picture,
     );
   }

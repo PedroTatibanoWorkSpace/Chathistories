@@ -12,9 +12,17 @@ export type CreateMessageProps = {
   waSenderId: string;
   senderName?: string;
   status: number;
+  isApproved?: boolean;
   type: number;
   isOut: boolean;
   ack: number;
+  isTemplate?: boolean;
+  optionsOpen?: boolean;
+  deleted?: boolean;
+  hide?: boolean;
+  processor?: number;
+  isForwarded?: boolean;
+  fromDevice?: boolean;
   text?: string;
   quotes?: string;
   quotesType?: number;
@@ -28,6 +36,7 @@ export type CreateMessageProps = {
   watsonResponse?: any;
   errorDetails?: any;
   edits?: any;
+  createdAt?: Date;
   timestamp: Date;
   sendDate?: Date;
 };
@@ -178,18 +187,18 @@ export class Message {
       props.waMessageId,
       props.waSenderId,
       props.status,
-      false,
+      props.isApproved ?? false,
       props.type,
       props.isOut,
       props.ack,
-      false,
-      false,
-      false,
-      false,
-      0,
-      false,
-      false,
-      new Date(),
+      props.isTemplate ?? false,
+      props.optionsOpen ?? false,
+      props.deleted ?? false,
+      props.hide ?? false,
+      props.processor ?? 0,
+      props.isForwarded ?? false,
+      props.fromDevice ?? false,
+      props.createdAt || new Date(),
       props.timestamp,
       props.sendDate,
       props.authorId,
@@ -256,4 +265,44 @@ export class Message {
       props.edits,
     );
   }
+
+  static mapMessageStatus(status: string): number {
+    const statusMap: { [key: string]: number } = {
+      sent: 1,
+      processed: 2,
+      delivered: 3,
+      read: 4,
+      failed: 5,
+    };
+    return statusMap[status] || 0;
+  }
+
+  static mapMessageType(type: string): number {
+    const typeMap: { [key: string]: number } = {
+      chat: 1,
+      image: 2,
+      audio: 3,
+      video: 4,
+      document: 5,
+      location: 6,
+      contact: 7,
+      template: 8,
+    };
+    return typeMap[type] || 1;
+  }
+
+  
+  static mapQuotesType(quotesType: string | undefined): number | undefined {
+    if (!quotesType) return undefined;
+
+    const quotesTypeMap: { [key: string]: number } = {
+      chat: 1,
+      image: 2,
+      audio: 3,
+      video: 4,
+      document: 5,
+    };
+    return quotesTypeMap[quotesType] || 1;
+  }
+
 }

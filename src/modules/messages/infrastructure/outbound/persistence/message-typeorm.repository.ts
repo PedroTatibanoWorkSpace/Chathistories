@@ -31,15 +31,19 @@ export class TypeOrmMessageRepository implements MessageRepositoryPort {
   }
 
   async createMany(messages: Message[]): Promise<Message[]> {
-    if (messages.length === 0) return [];
+    try {
+      if (messages.length === 0) return [];
 
-    const ormMessages = messages.map(MessageMapper.toOrmEntity);
-    const insertResult = await this.messageRepository.insert(ormMessages);
+      const ormMessages = messages.map(MessageMapper.toOrmEntity);
+      const insertResult = await this.messageRepository.insert(ormMessages);
 
-    return messages.map((message, index) => ({
-      ...message,
-      id: insertResult.identifiers[index]?.id || message.id
-    }));
+      return messages.map((message, index) => ({
+        ...message,
+        id: insertResult.identifiers[index]?.id || message.id,
+      }));
+    } catch (error) {
+      return [];
+    }
   }
 
   async paginate(
@@ -99,11 +103,17 @@ export class TypeOrmMessageRepository implements MessageRepositoryPort {
     return entity ? MessageMapper.toDomainEntity(entity) : null;
   }
 
+  async find(filter: any): Promise<Message[]> {
+    const entities = await this.messageRepository.find({
+      where: filter,
+    });
+    return entities.map(MessageMapper.toDomainEntity);
+  }
+
   async findMessageByExternalId(externalId: string): Promise<Message | null> {
     const entity = await this.messageRepository.findOne({
       where: { externalId } as FindOptionsWhere<MessageOrmEntity>,
     });
-
     return entity ? MessageMapper.toDomainEntity(entity) : null;
   }
 
