@@ -3,6 +3,7 @@ export class PaginateChatsInputDto {
   phoneId?: string;
   accountId?: string;
   waChatId?: string;
+  phone?: string;
   status?: number;
   favorite?: boolean;
   archived?: boolean;

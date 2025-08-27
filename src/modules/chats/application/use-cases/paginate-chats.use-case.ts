@@ -17,9 +17,13 @@ export class PaginateChatsUseCase implements PaginateChatsPort {
     input: PaginateChatsInputDto,
     params: { page: number; limit: number },
   ): Promise<PaginatedResult<ChatOutput>> {
+    if (input.phone) {
+      input.waChatId = input.phone;
+      input.phoneId = undefined;
+    }
     const result = await this.chatRepository.paginate(input, params);
     return {
-      items: result.items.map(chat => ChatMapper.toOutputDto(chat)),
+      items: result.items.map((chat) => ChatMapper.toOutputDto(chat)),
       total: result.total,
     };
   }
